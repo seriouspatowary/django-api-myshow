@@ -12,6 +12,8 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 CORS_ALLOW_CREDENTIALS = True
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -26,9 +28,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
+    "myshow.thecalmspace.in",
     "13.126.111.233",
     "localhost",
     "127.0.0.1"
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://myshow.thecalmspace.in"
 ]
 
 

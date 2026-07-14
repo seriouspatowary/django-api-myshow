@@ -3,7 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .services import register_user, login_user, refresh_access_token
+import os
 
+is_production = os.getenv("ENVIRONMENT") == "production"
 
 class LogoutAPIView(APIView):
 
@@ -114,8 +116,8 @@ class LoginAPIView(APIView):
                 key="refreshToken",
                 value=result["refresh_token"],
                 httponly=True,
-                secure=False,      # Change to True in production (HTTPS)
-                samesite="Lax",    # Use "None" for cross-site HTTPS
+                secure=is_production,     # Change to True in production (HTTPS)
+                samesite="None",    # Use "None" for cross-site HTTPS
                 max_age=30 * 24 * 60 * 60,
             )
 

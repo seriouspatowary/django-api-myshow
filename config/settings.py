@@ -17,13 +17,19 @@ CORS_ALLOW_CREDENTIALS = True
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tu(ev9a1!&j(h6k=4gs^=375%mk42yyk=c5uvt!s@1a+xz@gz8'
+
+
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "13.126.111.233",
+    "localhost",
+    "127.0.0.1"
+]
 
 
 # Application definition
@@ -55,7 +61,8 @@ MIDDLEWARE = [
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://myshowapp.vercel.app"
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -123,4 +130,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'

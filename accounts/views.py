@@ -117,7 +117,7 @@ class LoginAPIView(APIView):
                 value=result["refresh_token"],
                 httponly=True,
                 secure=is_production,     # Change to True in production (HTTPS)
-                samesite="None",    # Use "None" for cross-site HTTPS
+                samesite="lax",    # Use "None" for cross-site HTTPS
                 max_age=30 * 24 * 60 * 60,
             )
 

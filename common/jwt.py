@@ -7,6 +7,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
+def verify_access_token(token):
+
+    return jwt.decode(
+        token,
+        settings.ACCESS_SECRET,
+        algorithms=["HS256"],
+    )
 
 
 def verify_refresh_token(token):

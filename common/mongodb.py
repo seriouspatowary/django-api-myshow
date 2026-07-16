@@ -16,3 +16,9 @@ def get_users_collection():
 
 def get_movies_collection():
     return db["movies"]
+
+def get_casts_collection():
+    return db["casts"]
+
+def get_crew_collection():
+    return db["crews"]

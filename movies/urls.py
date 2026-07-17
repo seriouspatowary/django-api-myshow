@@ -1,13 +1,15 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
-from .views import MovieListAPIView, CreatedAPIView, deleteMovieAPIView, UpdateMovieAPIView, PublicMovieListAPIView,castAddAPIView,displaynameAPIView, MovieCastDetailAPIView,crewAddAPIView, MovieCrewDetailAPIView
+from .views import MovieListAPIView, CreatedAPIView, deleteMovieAPIView, UpdateMovieAPIView,MovieByIdAPIView, PublicMovieListAPIView,castAddAPIView,displaynameAPIView, MovieCastDetailAPIView,crewAddAPIView, MovieCrewDetailAPIView
 
 
 urlpatterns = [
 
    
     path("public",PublicMovieListAPIView.as_view()),
+    path("getbyid/<str:id>",MovieByIdAPIView.as_view()),
+    
     path("admin",MovieListAPIView.as_view()),
     path("add",CreatedAPIView.as_view()),
     path("update/<str:id>",UpdateMovieAPIView.as_view()),

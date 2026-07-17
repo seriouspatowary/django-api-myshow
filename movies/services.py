@@ -237,13 +237,47 @@ def get_movie_cast_by_movieId(movieId):
 def get_movie_crew_by_movieId(movieId):
     crews = get_crew_collection()
 
-    crew = crews.find({"movieId": ObjectId(movieId)})
+    result = crews.find({"movieId": ObjectId(movieId)})
 
     crew_list = []
     
-    for crew in crews:
+    for crew in result:
         crew["_id"] = str(crew["_id"])
         crew["movieId"] = str(crew["movieId"])
         crew_list.append(crew)
 
     return crew_list
+
+
+def get_movie_by_movieId(id):
+    movies = get_movies_collection()
+    casts = get_casts_collection()
+    crews = get_crew_collection()
+    
+    
+    movie = movies.find_one({"_id":ObjectId(id)})
+    
+    if not movie:
+        raise Exception("Movie Not Found")
+    
+    movie["_id"] = str(movie["_id"])
+    
+    cast_list = list(casts.find({"movieId": ObjectId(id)}))
+    crew_list = list(crews.find({"movieId": ObjectId(id)}))
+    
+    
+    
+    for cast in cast_list:
+        cast["_id"] = str(cast["_id"])
+        cast["movieId"] = str(cast["movieId"])
+        
+    for crew in crew_list:
+        crew["_id"] = str(crew["_id"])
+        crew["movieId"] = str(crew["movieId"])
+
+    movie["casts"] = cast_list
+    movie["crews"] = crew_list
+    
+    return movie
+    
+    

@@ -267,6 +267,8 @@ def get_movie_by_movieId(id):
         raise Exception("Movie Not Found")
     
     movie["_id"] = str(movie["_id"])
+    # remove userId from response
+    movie.pop("userId", None)
     
     cast_list = list(casts.find({"movieId": ObjectId(id)}))
     crew_list = list(crews.find({"movieId": ObjectId(id)}))

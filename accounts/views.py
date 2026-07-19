@@ -112,14 +112,24 @@ class LoginAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-            response.set_cookie(
-                key="refreshToken",
-                value=result["refresh_token"],
-                httponly=True,
-                secure=is_production,     # Change to True in production (HTTPS)
-                samesite="lax",    # Use "None" for cross-site HTTPS
-                max_age=30 * 24 * 60 * 60,
-            )
+            if is_production:
+                    response.set_cookie(
+                        key="refreshToken",
+                        value=result["refresh_token"],
+                        httponly=True,
+                        secure=is_production,     # Change to True in production (HTTPS)
+                        samesite="lax",    # Use "None" for cross-site HTTPS
+                        max_age=30 * 24 * 60 * 60,
+                    )
+            else:
+                response.set_cookie(
+                    key="refreshToken",
+                    value=result["refresh_token"],
+                    httponly=True,
+                    secure=False,
+                    samesite="Lax",
+                    max_age=30 * 24 * 60 * 60,
+                )
 
             return response
 

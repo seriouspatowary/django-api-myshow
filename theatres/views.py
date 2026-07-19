@@ -134,7 +134,9 @@ class AddScreenAPIView(APIView):
                    "success":True,
                     "message":"Screen Created Successfully",
                     "data":screen
-               }
+               },
+               status= status.HTTP_200_OK
+               
            )
            
            
@@ -145,7 +147,7 @@ class AddScreenAPIView(APIView):
                     "success":False,
                     "message":str(e)
                },
-               status= status.HTTP_200_OK
+               status= status.HTTP_400_BAD_REQUEST
             )
         
         

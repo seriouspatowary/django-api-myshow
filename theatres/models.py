@@ -23,8 +23,8 @@ def screenSchema(name,theatreId,totalSeats):
     
     return{
         "name":name.strip(),
-        "theatreId": theatreId.strip(),
-        "totalSeats": totalSeats.strip(),
+        "theatreId": ObjectId(theatreId),
+        "totalSeats": totalSeats,
         "createdAt":now,
         "updatedAt":now
          

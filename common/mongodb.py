@@ -22,3 +22,10 @@ def get_casts_collection():
 
 def get_crew_collection():
     return db["crews"]
+
+def get_theatre_collection():
+      return db["theatres"]
+  
+def get_screen_collection():
+    return db["screens"]
+      

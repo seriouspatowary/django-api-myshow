@@ -74,7 +74,7 @@ class CreatedAPIView(APIView):
 
     def post(self,request):
         try:
-            movie = create_movie(request.data)
+            movie = create_movie(request.data,request.user["_id"])
 
             return Response(
                 {
@@ -138,7 +138,11 @@ class MovieListAPIView(APIView):
         page = request.GET.get("page", 1)
         limit = request.GET.get("limit", 10)
 
-        data = get_movies(page, limit)
+        data = get_movies(
+            request.user["_id"],
+            page,
+            limit
+        )
 
         return Response(
             {

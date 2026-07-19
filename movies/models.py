@@ -3,6 +3,7 @@ from bson import ObjectId
 
 
 def movie_schema(
+    userId,
     title,
     genre,
     image,
@@ -15,17 +16,21 @@ def movie_schema(
     now = datetime.utcnow()
 
     return {
+        "userId": ObjectId(userId),
         "title": title.strip(),
         "genre": genre.strip(),
         "image": image.strip(),
         "description": description.strip(),
         "duration": duration,          # e.g. 169 (minutes)
-        "language": language.strip(),  # e.g. English, Hindi
-        "dimension": dimension.strip(),# e.g. 2D, 3D, IMAX 3D, 4DX
-        "releaseDate": release_date,   # datetime object or ISO string
+        "language": language.strip(),  # English, Hindi
+        "dimension": dimension.strip(),# 2D, 3D, IMAX 3D, 4DX
+        "releaseDate": release_date,
+        "isActive": True,
         "createdAt": now,
         "updatedAt": now,
     }
+
+
 
 
 def cast_schema(movieId,name,character,image):

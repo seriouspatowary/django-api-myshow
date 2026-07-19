@@ -55,17 +55,21 @@ def get_public_movies():
 
 
 
-def get_movies(page=1, limit=10):
+def get_movies(userId,page=1, limit=10):
     movies = get_movies_collection()
 
     page = int(page)
     limit = int(limit)
     skip = (page - 1) * limit
+    
+    query = {
+        "userId": ObjectId(userId)
+    }
 
     total = movies.count_documents({})
 
     result = (
-        movies.find()
+        movies.find(query)
         .sort("createdAt", -1)
         .skip(skip)
         .limit(limit)
@@ -75,6 +79,7 @@ def get_movies(page=1, limit=10):
 
     for movie in result:
         movie["_id"] = str(movie["_id"])
+        movie["userId"] = str(movie["userId"])
         movie_list.append(movie)
 
     return {
@@ -88,9 +93,10 @@ def get_movies(page=1, limit=10):
     }
 
 
-def create_movie(data):
+def create_movie(data,userId):
     movies = get_movies_collection()
     movie = movie_schema(
+        userId=userId,
         title=data["title"],
         genre=data["genre"],
         image=data["image"],
@@ -105,7 +111,7 @@ def create_movie(data):
 
     result = movies.insert_one(movie)
     movie["_id"] = str(result.inserted_id)
-
+    movie["userId"] = str(movie["userId"])
     return movie
 
 

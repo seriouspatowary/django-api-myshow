@@ -31,6 +31,8 @@ class JWTAuthentication(BaseAuthentication):
         user = users.find_one({
             "_id": ObjectId(payload["userId"])
         })
+        
+        print("loggedin user:",payload["userId"])
 
         if not user:
             raise AuthenticationFailed("User not found")

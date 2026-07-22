@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
-from .views import MovieListAPIView, CreatedAPIView, deleteMovieAPIView, UpdateMovieAPIView,MovieByIdAPIView, PublicMovieListAPIView,castAddAPIView,displaynameAPIView, MovieCastDetailAPIView,crewAddAPIView, MovieCrewDetailAPIView
+from .views import MovieListAPIView, CreatedAPIView, deleteMovieAPIView, UpdateMovieAPIView,MovieByIdAPIView, PublicMovieListAPIView,castAddAPIView,displaynameAPIView, MovieCastDetailAPIView,crewAddAPIView, MovieCrewDetailAPIView,ListofMovieIdAPIView
 
 
 urlpatterns = [
@@ -25,5 +25,10 @@ urlpatterns = [
     
     path("crew/add",crewAddAPIView.as_view()),
     path("crew/<str:movieId>", MovieCrewDetailAPIView.as_view()),
+    
+    
+    # for the dropdown
+    path("list", ListofMovieIdAPIView.as_view())
+    
     
 ]

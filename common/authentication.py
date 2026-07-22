@@ -24,7 +24,11 @@ class JWTAuthentication(BaseAuthentication):
         try:
             payload = verify_access_token(token)
         except Exception:
-            raise AuthenticationFailed("Invalid or expired token")
+           raise AuthenticationFailed( detail={
+                    "message": "Access token expired",
+                    "code": "TOKEN_EXPIRED"
+                }
+            )
 
         users = get_users_collection()
 
@@ -32,7 +36,6 @@ class JWTAuthentication(BaseAuthentication):
             "_id": ObjectId(payload["userId"])
         })
         
-        print("loggedin user:",payload["userId"])
 
         if not user:
             raise AuthenticationFailed("User not found")

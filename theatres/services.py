@@ -1,6 +1,6 @@
 from math import ceil
-from common.mongodb import get_theatre_collection, get_screen_collection
-from .models import theatreSchema, screenSchema
+from common.mongodb import get_theatre_collection, get_screen_collection, get_seat_collection
+from .models import seat_layout_schema, theatreSchema, screenSchema
 from bson import ObjectId
 from datetime import datetime
 
@@ -24,7 +24,7 @@ def create_theatre(data):
     return theatre
 
 
-def get_theatre(page, limit,search=""):
+def get_theatre(page, limit, userId,search=""):
     
     theatres = get_theatre_collection()
     screens = get_screen_collection()
@@ -33,7 +33,9 @@ def get_theatre(page, limit,search=""):
     limit = int(limit)
     skip = (page-1)*limit
     
-    query = {}
+    query = {
+       "userId": ObjectId(userId)
+    }
     
     if search:
         query ={
@@ -59,6 +61,7 @@ def get_theatre(page, limit,search=""):
         theatre_id = theatre["_id"]
         
         theatre["_id"] = str(theatre["_id"])
+        theatre["userId"] = str(theatre["userId"])
         
         
         # fetch screens
@@ -151,7 +154,6 @@ def update_theatre(id, data):
                 screens.insert_one(screen)
 
 
-
     # fetch updated theatre
     theatre = theatres.find_one({
         "_id": theatre_id
@@ -159,6 +161,7 @@ def update_theatre(id, data):
 
 
     theatre["_id"] = str(theatre["_id"])
+    theatre["userId"]= str(theatre["userId"])
 
 
     # fetch screens
@@ -234,19 +237,155 @@ def create_screen(data):
     result = screens.insert_one(screen)
     screen["_id"] = str(result.inserted_id)
     screen["theatreId"] = str(screen["theatreId"])
-    
-    print(screen)
+
 
 
     return screen
+
+
+def get_theatre_list(userId):
+    
+    theatres = get_theatre_collection()
+    
+    result = theatres.find(
+        {
+            "userId":ObjectId(userId)
+        },
+        {
+           "name":1
+        }).sort("createdAt", -1)
+    
+
+    
+    theatre_list = []
+    
+    for theatre in result:
+         theatre["_id"] = str(theatre["_id"])
+         theatre_list.append(theatre)
+         
+    return theatre_list
+
+
+
+def get_theatre_screen_list(id):
+    
+    theatres = get_theatre_collection()
+    screens = get_screen_collection()
+    
+    # validate theate exist
+    
+    theatre = theatres.find_one({"_id":ObjectId(id)})
+    
+    if not theatre:
+        raise Exception("Theatre Not exist")
+    
+    result = screens.find(
+        {
+            "theatreId":ObjectId(id)
+        },
+         {
+           "name":1
+        }).sort("createdAt", -1)
+    
+    screen_list = []
+    
+    for screen in result:
+         screen["_id"] = str(screen["_id"])
+         screen_list.append(screen)
+         
+    return screen_list
     
     
+def create_seat_layout(data,userId):
+    
+    seats = get_seat_collection()
+    screens = get_screen_collection()
+    
+    # validate screen exist
+    screen = screens.find_one({"_id":ObjectId(data["screenId"])})
     
     
+    existing = seats.find_one({
+     "screenId": ObjectId(data["screenId"])
+      })
+
+    if existing:
+            raise Exception("Seat layout already exists for this screen")
     
+    if not screen:
+        raise Exception("Screen Not exist")
     
+    seat = seat_layout_schema(
+          userId= userId,
+          screenId = data["screenId"],
+          layout=data["layout"] 
+        
+     )
     
-    
+    result = seats.insert_one(seat)
+    seat["_id"] = str(result.inserted_id)
+    seat["screenId"] = str(seat["screenId"])
+    seat["userId"] = str(seat["userId"])
+
+
+    return seat
+
+
+def get_seat_list(id):
+
+    screens = get_screen_collection()
+    seats = get_seat_collection()
+
+    screen_id = ObjectId(id)
+
+    # check theatre exists
+    screen = screens.find_one({
+        "_id": screen_id
+    })
+
+    if not screen:
+        raise Exception("Screen Not Found")
+
+ # Find seat layout
+    result = seats.find_one(
+        {"screenId": screen_id},
+        {"layout": 1}
+    )
+
+    if not result:
+        raise Exception("Seat layout not found for this screen")
+
+    result["_id"] = str(result["_id"])
+
+    return result
+
+
+def get_seat_type(screenId):
+    seats = get_seat_collection()
+
+    seat_layout = seats.find_one(
+        {"screenId": ObjectId(screenId)},
+        {"layout": 1}
+    )
+
+    if not seat_layout:
+        raise Exception("Seat layout not found")
+
+    layout = seat_layout.get("layout", {})
+
+    seat_types = set()
+    total_seats = 0
+
+    for row in layout.values():
+        seat_types.add(row["seatType"])
+        total_seats += row["seatCount"]
+
+    return {
+        "seatTypes": sorted(list(seat_types)),
+        "totalSeats": total_seats
+    }
+
+
     
     
     

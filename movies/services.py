@@ -150,6 +150,7 @@ def update_movie(movie_id,data):
               )
     
     movie["_id"] = str(movie["_id"])
+    movie["userId"] = str(movie["userId"])
 
     return movie
 
@@ -288,4 +289,30 @@ def get_movie_by_movieId(id):
     
     return movie
     
+    
+def get_movies_list():
+    movies = get_movies_collection()
+    
+    
+
+    result = (
+        movies.find(
+          {},
+            {
+                "title": 1,
+            }
+        )
+        .sort("createdAt", -1)
+    )
+
+    movie_list = []
+
+    for movie in result:
+        movie["_id"] = str(movie["_id"])
+        movie_list.append(movie)
+
+    return movie_list
+
+
+
     

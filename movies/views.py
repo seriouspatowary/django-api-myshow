@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .services import get_movies, create_movie, delete_movie, update_movie, get_display_movies,get_public_movies,create_movie_cast, create_movie_crew, get_movie_cast_by_movieId, get_movie_crew_by_movieId, get_movie_by_movieId
+from .services import get_movies, create_movie, delete_movie, update_movie, get_display_movies,get_public_movies,create_movie_cast, create_movie_crew, get_movie_cast_by_movieId, get_movie_crew_by_movieId, get_movie_by_movieId,get_movies_list
 from common.authentication import JWTAuthentication
 from common.permissions import IsAdmin
 
@@ -294,3 +294,17 @@ class MovieByIdAPIView(APIView):
                     },
                     status = status.HTTP_404_NOT_FOUND,
                 )
+                
+class ListofMovieIdAPIView(APIView):
+
+    
+    def get(self, request):
+        movies = get_movies_list()
+
+        return Response(
+            {
+                "success": True,
+                "movies": movies
+            },
+            status=status.HTTP_200_OK
+        )

@@ -28,4 +28,10 @@ def get_theatre_collection():
   
 def get_screen_collection():
     return db["screens"]
+
+def get_shows_collection():
+    return db["shows"]
+
+def get_seat_collection():
+    return db["seats"]
       

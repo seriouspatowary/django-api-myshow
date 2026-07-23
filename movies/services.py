@@ -41,7 +41,7 @@ def get_public_movies():
                 "image": 1,
             }
         )
-        .sort("createdAt", -1)
+        .sort("createdAt", 1)
     )
 
     movie_list = []
@@ -70,7 +70,7 @@ def get_movies(userId,page=1, limit=10):
 
     result = (
         movies.find(query)
-        .sort("createdAt", -1)
+        .sort("createdAt", 1)
         .skip(skip)
         .limit(limit)
     )

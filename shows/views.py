@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .services import create_show, get_shows, update_show, get_show_byId
+from .services import create_show, get_shows, update_show, get_show_byId, get_shows_by_movie, get_layout_by_show
 from common.authentication import JWTAuthentication
 from common.permissions import IsAdmin
 
@@ -126,3 +126,57 @@ class GetShowByIdAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
+            
+     
+class GetShowByMovieAPIView(APIView):
+    
+  def get(self, request, movieId):
+
+        language = request.GET.get("language")
+        dimension = request.GET.get("dimension")
+
+        if not language or not dimension:
+            return Response(
+                {
+                    "success": False,
+                    "message": "language and dimension are required"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        data = get_shows_by_movie(
+            movieId,
+            language,
+            dimension
+        )
+
+        return Response(
+            {
+                "success": True,
+                "data": data
+            }
+        )
+        
+        
+        
+class GetLayoutByShowAPIView(APIView):
+    
+  def get(self, request, showId):
+     try:
+       
+        data = get_layout_by_show(showId)
+
+        return Response(
+            {
+                "success": True,
+                "data": data
+            }
+        )
+     except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )

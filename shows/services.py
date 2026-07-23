@@ -34,7 +34,9 @@ def create_show(data, userId):
         availableSeats=data["availableSeats"],
         prices=data["prices"],
         schedule=data["schedule"],
-        layout=layout
+        layout=layout,
+        dimension=data["dimension"],
+        language=data["language"]
     )
 
     result = shows.insert_one(show)
@@ -92,7 +94,6 @@ def get_shows(userId, page=1, limit=10):
     }
 
 
-
 def update_show(data, showId, userId):
 
     shows = get_shows_collection()
@@ -105,7 +106,6 @@ def update_show(data, showId, userId):
     if not show:
         raise Exception("Show not found")
 
-    # fields allowed to update
     update_data = {}
 
     if "prices" in data:
@@ -114,11 +114,20 @@ def update_show(data, showId, userId):
     if "schedule" in data:
         update_data["schedule"] = data["schedule"]
 
-    # DO NOT allow availableSeats update
-    # ignore if present in request
+    if "dimension" in data:
+        update_data["dimension"] = data["dimension"]
+
+    if "language" in data:
+        update_data["language"] = data["language"]
+
+    # Don't allow these to be updated
+    # availableSeats
+    # layout
+    # movieId
+    # theatreId
+    # screenId
 
     update_data["updatedAt"] = datetime.utcnow()
-
 
     result = shows.update_one(
         {
@@ -133,11 +142,9 @@ def update_show(data, showId, userId):
     if result.modified_count == 0:
         raise Exception("No changes made")
 
-
     updated_show = shows.find_one({
         "_id": ObjectId(showId)
     })
-
 
     updated_show["_id"] = str(updated_show["_id"])
     updated_show["userId"] = str(updated_show["userId"])
@@ -249,3 +256,173 @@ def get_show_byId(showId):
 
 
     return show
+
+
+
+def get_shows_by_movie(movieId, language, dimension):
+    shows = get_shows_collection()
+
+    pipeline = [
+        {
+            "$match": {
+                "movieId": ObjectId(movieId),
+                "language": language,
+                "dimension": dimension
+            }
+        },
+        {
+            "$lookup": {
+                "from": "movies",
+                "localField": "movieId",
+                "foreignField": "_id",
+                "as": "movie"
+            }
+        },
+        {
+            "$unwind": "$movie"
+        },
+        {
+            "$lookup": {
+                "from": "theatres",
+                "localField": "theatreId",
+                "foreignField": "_id",
+                "as": "theatre"
+            }
+        },
+        {
+            "$unwind": "$theatre"
+        },
+        {
+            "$lookup": {
+                "from": "screens",
+                "localField": "screenId",
+                "foreignField": "_id",
+                "as": "screen"
+            }
+        },
+        {
+            "$unwind": "$screen"
+        },
+        {
+            "$project": {
+                "_id": 1,
+                "movieId": 1,
+                "movieName": "$movie.title",
+                "genre":"$movie.genre",
+                "duration":"$movie.duration",
+
+                "theatreId": 1,
+                "theatreName": "$theatre.name",
+
+                "screenId": 1,
+                "screenName": "$screen.name",
+
+                "language": 1,
+                "dimension": 1,
+                "prices": 1,
+                "schedule": 1,
+                "availableSeats": 1
+            }
+        },
+        {
+            "$sort": {
+                "theatreName": 1
+            }
+        }
+    ]
+
+    result = list(shows.aggregate(pipeline))
+
+    for show in result:
+        show["_id"] = str(show["_id"])
+        show["movieId"] = str(show["movieId"])
+        show["theatreId"] = str(show["theatreId"])
+        show["screenId"] = str(show["screenId"])
+
+    return result
+
+
+
+def get_layout_by_show(showId):
+    shows = get_shows_collection()
+
+    pipeline = [
+        {
+            "$match": {
+                "_id": ObjectId(showId)
+            }
+        },
+        {
+            "$lookup": {
+                "from": "movies",
+                "localField": "movieId",
+                "foreignField": "_id",
+                "as": "movie"
+            }
+        },
+        {
+            "$unwind": "$movie"
+        },
+        {
+            "$lookup": {
+                "from": "theatres",
+                "localField": "theatreId",
+                "foreignField": "_id",
+                "as": "theatre"
+            }
+        },
+        {
+            "$unwind": "$theatre"
+        },
+        {
+            "$lookup": {
+                "from": "screens",
+                "localField": "screenId",
+                "foreignField": "_id",
+                "as": "screen"
+            }
+        },
+        {
+            "$unwind": "$screen"
+        },
+        {
+            "$project": {
+                "_id": 1,
+                "movieId": 1,
+                "movieName": "$movie.title",
+                "genre": "$movie.genre",
+                "duration": "$movie.duration",
+                "image": "$movie.image",
+
+                "theatreId": 1,
+                "theatreName": "$theatre.name",
+                "theatreAddress": "$theatre.address",
+
+                "screenId": 1,
+                "screenName": "$screen.name",
+
+                "language": 1,
+                "dimension": 1,
+                "prices": 1,
+                "schedule": 1,
+                "layout": 1,
+                "availableSeats": 1
+            }
+        }
+    ]
+
+    result = list(shows.aggregate(pipeline))
+
+    if not result:
+        return None
+
+    show = result[0]
+
+    show["_id"] = str(show["_id"])
+    show["movieId"] = str(show["movieId"])
+    show["theatreId"] = str(show["theatreId"])
+    show["screenId"] = str(show["screenId"])
+
+    return show
+
+    

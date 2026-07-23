@@ -10,7 +10,9 @@ def show_schema(
     availableSeats,
     prices,
     schedule,
-    layout
+    layout,
+    dimension,
+    language,
 ):
     now = datetime.utcnow()
 
@@ -23,6 +25,8 @@ def show_schema(
         "prices": prices,
         "layout": layout,
         "schedule": schedule,
+        "dimension": dimension,
+        "language":language,
         "createdAt": now,
         "updatedAt": now
     }

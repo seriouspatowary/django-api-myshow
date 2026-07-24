@@ -385,6 +385,39 @@ def get_layout_by_show(showId):
         {
             "$unwind": "$screen"
         },
+        
+        {
+          "$lookup": {
+                "from": "bookings",
+                "let": {
+                    "showId": "$_id"
+                },
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$eq": ["$showId", "$$showId"]
+                            }
+                        }
+                    },
+                    {
+                        "$match": {
+                            "status": "CONFIRMED",
+                            "paymentStatus": "SUCCESS"
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "date": 1,
+                            "time": 1,
+                            "seats": 1
+                        }
+                    }
+                ],
+                "as": "bookings"
+            }
+        },
         {
             "$project": {
                 "_id": 1,
@@ -392,7 +425,6 @@ def get_layout_by_show(showId):
                 "movieName": "$movie.title",
                 "genre": "$movie.genre",
                 "duration": "$movie.duration",
-                "image": "$movie.image",
 
                 "theatreId": 1,
                 "theatreName": "$theatre.name",
@@ -406,7 +438,8 @@ def get_layout_by_show(showId):
                 "prices": 1,
                 "schedule": 1,
                 "layout": 1,
-                "availableSeats": 1
+                "availableSeats": 1,
+                 "bookings": 1
             }
         }
     ]

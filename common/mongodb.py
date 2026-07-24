@@ -35,3 +35,6 @@ def get_shows_collection():
 def get_seat_collection():
     return db["seats"]
       
+      
+def get_booking_collection():
+    return db["bookings"]

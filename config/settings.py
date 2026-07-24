@@ -7,6 +7,10 @@ ACCESS_SECRET = os.getenv("ACCESS_SECRET")
 REFRESH_SECRET = os.getenv("REFRESH_SECRET")
 
 
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -56,7 +60,8 @@ INSTALLED_APPS = [
     'accounts',
     'movies',
     'theatres',
-    'shows'
+    'shows',
+    'payments'
 
 ]
 

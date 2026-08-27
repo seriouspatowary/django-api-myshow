@@ -3,6 +3,15 @@ from .models import movie_schema,cast_schema,crew_schema
 from bson import ObjectId
 from datetime import datetime
 from math import ceil
+from .serializers import  MovieSerializer
+from .decorators import execution_time
+
+
+
+def movie_generator(cursor):
+    for movie in cursor:
+        yield MovieSerializer.serialize(movie)
+
 
 
 def get_display_movies():
@@ -13,22 +22,19 @@ def get_display_movies():
             {},
             {
                 "title": 1,
+                "genre":1,
                 "image":1
             }
         )
         .sort("createdAt", -1)
     )
 
-    movie_list = []
-
-    for movie in result:
-        movie["_id"]=str(movie["_id"])
-        movie_list.append(movie)
-    return movie_list
+    
+    return list(movie_generator(result))
 
 
 
-
+@execution_time
 def get_public_movies():
     movies = get_movies_collection()
 
@@ -44,13 +50,9 @@ def get_public_movies():
         .sort("createdAt", 1)
     )
 
-    movie_list = []
+    
 
-    for movie in result:
-        movie["_id"] = str(movie["_id"])
-        movie_list.append(movie)
-
-    return movie_list
+    return list(movie_generator(result))
 
 
 
@@ -273,8 +275,7 @@ def get_movie_by_movieId(id):
     
     cast_list = list(casts.find({"movieId": ObjectId(id)}))
     crew_list = list(crews.find({"movieId": ObjectId(id)}))
-    
-    
+
     
     for cast in cast_list:
         cast["_id"] = str(cast["_id"])

@@ -2,17 +2,24 @@ import razorpay
 from datetime import datetime, timedelta
 from django.conf import settings
 from bson import ObjectId
-from common.mongodb import get_shows_collection, get_booking_collection, get_users_collection
-from .models import booking_schema
+from common.mongodb import (
+    client,
+    get_shows_collection,
+    get_booking_collection,
+    get_users_collection,
+    get_seat_locks_collection,
+)
+from .models import booking_schema,seat_lock_schema
+from pymongo.errors import DuplicateKeyError
 
 
-client = razorpay.Client(
+
+razorpay_client = razorpay.Client(
     auth=(
         settings.RAZORPAY_KEY_ID,
         settings.RAZORPAY_KEY_SECRET,
     )
 )
-
 
 def create_order(data):
 
@@ -23,8 +30,12 @@ def create_order(data):
     email = data["email"]
     mobile = data["mobile"]
 
+    if not seats:
+        raise Exception("No seats selected")
+
     shows = get_shows_collection()
     bookings = get_booking_collection()
+    seat_locks = get_seat_locks_collection()
 
     show = shows.find_one({
         "_id": ObjectId(show_id)
@@ -33,66 +44,112 @@ def create_order(data):
     if not show:
         raise Exception("Show not found")
 
-    if not seats:
-        raise Exception("No seats selected")
+    # --------------------------------
+    # Calculate amount
+    # --------------------------------
 
-    # Clear out abandoned pending locks so seats free up again
-    cutoff = datetime.utcnow() - timedelta(minutes=10)
-    bookings.delete_many({
-        "status": "pending",
-        "createdAt": {"$lt": cutoff},
-    })
-
-    conflict = bookings.find_one({
-        "showId": ObjectId(show_id),
-        "date": date,
-        "time": time,
-        "status": {"$in": ["pending", "paid"]},
-        "seats": {"$in": seats},
-    })
-
-    if conflict:
-        raise Exception("One or more seats are no longer available")
-
-    layout = show["layout"]      # row letter -> {seatCount, seatType}
-    prices = show["prices"]      # seatType -> price
+    layout = show["layout"]
+    prices = show["prices"]
 
     amount = 0
+
     for seat_id in seats:
+
         row = seat_id.split("-")[0]
+
         row_layout = layout.get(row)
+
         if not row_layout:
             raise Exception(f"Invalid seat: {seat_id}")
+
         seat_type = row_layout["seatType"]
+
         amount += prices[seat_type]
 
-    order = client.order.create({
+    # --------------------------------
+    # Create Razorpay order
+    # --------------------------------
+
+    order = razorpay_client.order.create({
         "amount": amount * 100,
         "currency": "INR",
         "payment_capture": 1,
     })
 
-    booking = booking_schema(
-        show_id=show_id,
-        date=date,
-        time=time,
-        seats=seats,
-        email=email,
-        mobile=mobile,
-        amount=amount,
-        razorpay_order_id=order["id"],
-    )
+    booking_id = ObjectId()
 
-    result = bookings.insert_one(booking)
+    now = datetime.utcnow()
+
+    expires_at = now + timedelta(minutes=4)
+
+    # --------------------------------
+    # MongoDB transaction
+    # --------------------------------
+
+ 
+
+    try:
+
+        with client.start_session() as session:
+
+            with session.start_transaction():
+
+                # 1. Create seat locks
+                lock_documents = []
+
+                for seat_id in seats:
+
+                    lock_documents.append(
+                        seat_lock_schema(
+                            show_id=show_id,
+                            date=date,
+                            time=time,
+                            seat_id=seat_id,
+                            booking_id=booking_id,
+                            expires_at=expires_at,
+                        )
+                    )
+
+                seat_locks.insert_many(
+                    lock_documents,
+                    session=session
+                )
+
+                # 2. Create pending booking
+
+                booking = booking_schema(
+                    show_id=show_id,
+                    date=date,
+                    time=time,
+                    seats=seats,
+                    email=email,
+                    mobile=mobile,
+                    amount=amount,
+                    razorpay_order_id=order["id"],
+                    expires_at=expires_at,
+                )
+
+                # Make sure same booking ID is used
+                booking["_id"] = booking_id
+
+                bookings.insert_one(
+                    booking,
+                    session=session
+                )
+
+    except DuplicateKeyError:
+
+        raise Exception(
+            "One or more seats are already booked or locked"
+        )
 
     return {
-        "bookingId": str(result.inserted_id),
+        "bookingId": str(booking_id),
         "orderId": order["id"],
         "amount": order["amount"],
         "currency": order["currency"],
         "key": settings.RAZORPAY_KEY_ID,
     }
-    
     
 def verify_payment(data):
 
@@ -101,7 +158,7 @@ def verify_payment(data):
     razorpay_signature = data["razorpay_signature"]
 
     # Verify signature
-    client.utility.verify_payment_signature({
+    razorpay_client.utility.verify_payment_signature({
         "razorpay_order_id": razorpay_order_id,
         "razorpay_payment_id": razorpay_payment_id,
         "razorpay_signature": razorpay_signature,
@@ -124,7 +181,7 @@ def verify_payment(data):
             "$set": {
                 "razorpayPaymentId": razorpay_payment_id,
                 "paymentStatus": "SUCCESS",
-                "status": "CONFIRMED",
+                "status": "paid",
                 "updatedAt": datetime.utcnow()
             }
         }
@@ -133,7 +190,7 @@ def verify_payment(data):
     return {
         "bookingId": str(booking["_id"]),
         "paymentId": razorpay_payment_id,
-        "status": "CONFIRMED"
+        "status": "paid"
     }
     
     
@@ -155,7 +212,7 @@ def get_myorders(userId):
         {
             "$match": {
                 "email": email,
-                "status": "CONFIRMED",
+                "status": "paid",
                 "paymentStatus": "SUCCESS"
             }
         },

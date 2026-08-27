@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
-
 
 def booking_schema(
     show_id,
@@ -11,6 +10,7 @@ def booking_schema(
     mobile,
     amount,
     razorpay_order_id,
+    expires_at,
 ):
     now = datetime.utcnow()
 
@@ -18,13 +18,44 @@ def booking_schema(
         "showId": ObjectId(show_id),
         "date": date,
         "time": time,
-        "seats": seats,                  # ["A-3", "A-4"]
+
+        "seats": seats,
+
         "email": email.strip(),
         "mobile": mobile.strip(),
+
         "amount": amount,
+
         "razorpayOrderId": razorpay_order_id,
         "razorpayPaymentId": None,
-        "status": "PENDING",             # PENDING -> PAID -> CANCELLED/EXPIRED
+
+        "status": "pending",
+
+        "lockExpiresAt": expires_at,
+
         "createdAt": now,
         "updatedAt": now,
+    }
+    
+    
+    
+    
+    
+    
+def seat_lock_schema(
+    show_id,
+    date,
+    time,
+    seat_id,
+    booking_id,
+    expires_at,
+):
+    return {
+        "showId": ObjectId(show_id),
+        "date": date,
+        "time": time,
+        "seatId": seat_id,
+        "bookingId": ObjectId(booking_id),
+        "expiresAt": expires_at,
+        "createdAt": datetime.utcnow(),
     }

@@ -38,3 +38,5 @@ def get_seat_collection():
       
 def get_booking_collection():
     return db["bookings"]
+def get_seat_locks_collection():
+    return db["seatlocks"]

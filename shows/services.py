@@ -402,7 +402,7 @@ def get_layout_by_show(showId):
                     },
                     {
                         "$match": {
-                            "status": "CONFIRMED",
+                            "status": "paid",
                             "paymentStatus": "SUCCESS"
                         }
                     },
